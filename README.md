@@ -10,7 +10,7 @@
 
 *A comprehensive dashboard for managing teams, tickets, tasks, and client services.*
 
-[Features](#features) • [Installation](#installation) • [Architecture](#architecture) • [Production Guide](#production-guide) • [**Backend Specs**](./ARCHITECTURE.md) • [**Frontend Specs**](./FRONTEND.md)
+[Features](#features) • [Installation](#installation) • [Architecture](#architecture) • [Documentation](#documentation)
 
 </div>
 
@@ -37,140 +37,56 @@ SocialPreview Dashboard is a monolithic full-stack application designed to strea
 The project follows a standard client-server architecture:
 
 ### Backend (`/backend`)
-
 * **Framework:** Rust (Axum)
 * **Database:** SQLx (SQLite for dev / PostgreSQL recommended for prod)
-* **Auth:** Secure HttpOnly Cookies (Google-Style) + JWT + Argon2 + TOTP
-* **Logging:** Tracing (structured logging)
+* **Auth:** Secure HttpOnly Cookies + JWT + Argon2 + TOTP
 
 ### Frontend (`/frontend`)
-
 * **Framework:** React 18 + TypeScript + Vite
 * **Styling:** Tailwind CSS
 * **State:** Context API
-* **HTTP:** Axios with interceptors
 
 ---
 
 ## <a id="installation"></a>🚀 Installation
 
-### Prerequisites
-
-* Rust (latest stable)
-* Node.js (v18+)
-* pnpm or npm
-
 ### 1. Backend Setup
-
 ```bash
 cd backend
-
-# Create .env file (already generated for you)
-# Ensure DATABASE_URL and secrets are set
-
-# Run migrations
 sqlx database create
 sqlx migrate run
-
-# specific dir for uploads (optional, currently uses DB storage)
-mkdir uploads
-
-# Run server
 cargo run
 ```
 
 ### 2. Frontend Setup
-
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start dev server
 npm run dev
 ```
 
-## <a id="registration"></a>🛠️ Manual Registration
+---
 
-Since the registration endpoint is protected by a secret key, you cannot simply "sign up" on the frontend initially. Use `curl` or Postman to create your first admin user.
+## <a id="documentation"></a>📄 Documentation
 
-**Endpoint:** `POST /api/auth/register`
+Detailed technical information can be found in the `docs/` directory:
 
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "registration_secret": "admin_secret_registration_key_2025",
-    "name": "TheRemyyy",
-    "nickname": "Remy",
-    "email": "remy@socialpreview.net",
-    "password": "StrongPassword123!",
-    "role": "management"
-  }'
-```
+### Core Guides
+- 📖 **[Overview](docs/overview.md)** — Start here for a complete project guide.
+- 🏗️ **[Backend Architecture](docs/backend/architecture.md)** — Axum, Tokio, and internal Rust logic.
+- 🔐 **[Authentication](docs/backend/auth.md)** — Deep dive into JWT, Argon2, and 2FA.
+- ⚡ **[Frontend Stack](docs/frontend/stack.md)** — React, Vite, and Tailwind implementation.
 
-> **Note:** The `registration_secret` is defined in your `backend/.env` file.
+### Technical & Production
+- 🚀 **[Production Guide](docs/technical/production.md)** — Essential steps for deploying to production.
+- 🚦 **[Routing & Guards](docs/frontend/routing.md)** — How we protect routes and handle roles.
+- 👥 **[RBAC & Permissions](docs/technical/rbac.md)** — Understanding user access levels.
 
 ---
 
-## <a id="production-guide"></a>⚠️ Production Guide
+## License
 
-> [!IMPORTANT]
-> **CRITICAL PRODUCTION WARNING**
-
-This application performs excellently in development with SQLite. However, for a production environment like `panel.socialpreview.net`, strict adherence to the following guidelines is required:
-
-### 1. Move to PostgreSQL
-
-**Do not use SQLite in production.**
-
-* **Why:** The current implementation stores profile pictures (up to 20MB) directly in the database as Base64 strings. SQLite will bloat rapidly and performance will degrade under concurrent writes.
-* **Action:**
-    1. Switch `DATABASE_URL` to a PostgreSQL connection string.
-    2. Update `sqlx` dependencies to enable `postgres` features.
-    3. Refactor `database.rs` queries to use Postgres syntax (`$1` instead of `?`).
-
-### 2. File Storage Refactoring
-
-**Database is not a file system.**
-
-* **Pass 1 (Current):** Images are stored in the DB. This works for small teams (~10 users) but scales poorly.
-* **Pass 2 (Recommended):** Refactor `update_profile_multipart` to save files to an S3 bucket or local disk (`./uploads`), storing only the *URL* in the database.
-
-### 3. Security Headers
-
-Ensure your reverse proxy (Nginx/Caddy) sets proper security headers:
-
-* `Strict-Transport-Security`
-* `X-Content-Type-Options`
-* `Content-Security-Policy`
-
----
-
-## 📁 Project Structure
-
-```text
-socialpreview-dashboard/
-├── backend/
-│   ├── migrations/         # SQL database migrations
-│   ├── src/
-│   │   ├── handlers_*.rs   # Domain-specific route handlers
-│   │   ├── models.rs       # Data structures & Types
-│   │   ├── auth.rs         # JWT & Password logic
-│   │   ├── database.rs     # SQLx queries
-│   │   └── main.rs         # App entry point & Router
-│   └── .env                # Backend configuration
-├── frontend/
-│   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── contexts/       # Global state (Auth, Theme)
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── routes/         # Page components
-│   │   └── config/         # App configuration
-│   └── .env                # Frontend configuration
-└── README.md               # Documentation
-```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
